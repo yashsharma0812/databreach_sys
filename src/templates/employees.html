@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Employees - Data Breach Prevention{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Employees</h2>
+    <a href="{{ url_for('add_employee') }}" class="btn btn-primary">Add New Employee</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Emp ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>{{ emp.emp_id }}</td>
+                        <td>{{ emp.name }}</td>
+                        <td>{{ emp.email }}</td>
+                        <td>{{ emp.role }}</td>
+                        <td>{{ emp.department }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - Data Breach Prevention{% endblock %}
+
+{% block content %}
+<h2>Security Alerts</h2>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Alert ID</th>
+                        <th>Emp ID</th>
+                        <th>Severity</th>
+                        <th>Reason</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr class="{{ 'table-warning' if alert.status == 'Open' else 'table-light' }}">
+                        <td>{{ alert.alert_id }}</td>
+                        <td>{{ alert.emp_id }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if alert.severity_level == 'Critical' else 'warning' if alert.severity_level == 'High' else 'info' }}">
+                                {{ alert.severity_level }}
+                            </span>
+                        </td>
+                        <td>{{ alert.reason }}</td>
+                        <td>{{ alert.alert_time }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if alert.status == 'Open' else 'success' }}">
+                                {{ alert.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if alert.status == 'Open' %}
+                            <form method="POST" action="{{ url_for('resolve_alert', alert_id=alert.alert_id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-success">Resolve</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

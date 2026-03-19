@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Access Logs - Data Breach Prevention{% endblock %}
+
+{% block content %}
+<h2>Access Logs</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="search" placeholder="Search by Emp ID or Action Type" value="{{ search }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary me-2">Search</button>
+                <a href="{{ url_for('access_logs') }}" class="btn btn-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Log ID</th>
+                        <th>Emp ID</th>
+                        <th>System ID</th>
+                        <th>Asset ID</th>
+                        <th>Action</th>
+                        <th>Timestamp</th>
+                        <th>IP Address</th>
+                        <th>Device Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.log_id }}</td>
+                        <td>{{ log.emp_id }}</td>
+                        <td>{{ log.system_id }}</td>
+                        <td>{{ log.asset_id }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if log.action_type == 'READ' else 'warning' if log.action_type == 'UPDATE' else 'danger' }}">
+                                {{ log.action_type }}
+                            </span>
+                        </td>
+                        <td>{{ log.event_timestamp }}</td>
+                        <td>{{ log.ip_address }}</td>
+                        <td>{{ log.device_info }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

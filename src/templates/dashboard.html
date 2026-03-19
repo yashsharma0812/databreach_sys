@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Data Breach Prevention{% endblock %}
+
+{% block head %}
+<style>
+.stats-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-4" style="color: var(--primary-color); font-weight: 700;">
+            🛡️ Enterprise Security Dashboard
+        </h1>
+        <p class="text-center text-muted mb-5">Real-time monitoring and analytics for data breach prevention</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-5">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="stats-icon">👥</div>
+                <h5 class="card-title">Total Employees</h5>
+                <h2>{{ stats.employees }}</h2>
+                <small class="opacity-75">Active workforce</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stats-card success h-100">
+            <div class="card-body">
+                <div class="stats-icon">📊</div>
+                <h5 class="card-title">Access Logs</h5>
+                <h2>{{ stats.logs }}</h2>
+                <small class="opacity-75">Total activities</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stats-card warning h-100">
+            <div class="card-body">
+                <div class="stats-icon">🚨</div>
+                <h5 class="card-title">Open Alerts</h5>
+                <h2>{{ stats.open_alerts }}</h2>
+                <small class="opacity-75">Require attention</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card stats-card danger h-100">
+            <div class="card-body">
+                <div class="stats-icon">⚠️</div>
+                <h5 class="card-title">Avg Risk Score</h5>
+                <h2>{{ stats.avg_risk }}</h2>
+                <small class="opacity-75">Risk assessment</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📈 Activity Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">🎯 Risk Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="riskChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">🏢 Department Access</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="departmentChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">⏰ Hourly Activity</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions & System Status -->
+<div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+        <div class="card action-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">⚡ Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('add_employee') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Add New Employee
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="btn btn-info btn-lg">
+                        <i class="fas fa-chart-bar me-2"></i>Generate Reports
+                    </a>
+                    <a href="{{ url_for('alerts') }}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-exclamation-triangle me-2"></i>View Alerts
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card status-card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">🛡️ System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="status-item success">
+                            <i class="fas fa-database me-3 fs-4"></i>
+                            <div>
+                                <strong>Database</strong><br>
+                                <small>Connected & Healthy</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="status-item info">
+                            <i class="fas fa-clock me-3 fs-4"></i>
+                            <div>
+                                <strong>Last Update</strong><br>
+                                <small>Real-time Monitoring</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="status-item danger">
+                            <i class="fas fa-lock me-3 fs-4"></i>
+                            <div>
+                                <strong>Security Level</strong><br>
+                                <small>High Protection Active</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Feed -->
+<div class="row">
+    <div class="col-12">
+        <div class="card activity-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📋 Recent Security Events</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Event</th>
+                                <th>User</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivity">
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="loading"></div>
+                                    <span class="ms-2">Loading recent activity...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load all chart data
+    Promise.all([
+        fetch('/api/chart_data').then(r => r.json()),
+        fetch('/api/risk_distribution').then(r => r.json()),
+        fetch('/api/department_access').then(r => r.json()),
+        fetch('/api/hourly_activity').then(r => r.json()),
+        fetch('/api/recent_activity').then(r => r.json())
+    ]).then(([activityData, riskData, deptData, hourlyData, recentData]) => {
+
+        // Activity Chart
+        const activityCtx = document.getElementById('activityChart').getContext('2d');
+        new Chart(activityCtx, {
+            type: 'line',
+            data: {
+                labels: activityData.labels,
+                datasets: [{
+                    label: 'Daily Access Count',
+                    data: activityData.data,
+                    borderColor: 'rgb(102, 126, 234)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: 'rgb(102, 126, 234)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Risk Distribution Chart
+        const riskCtx = document.getElementById('riskChart').getContext('2d');
+        new Chart(riskCtx, {
+            type: 'doughnut',
+            data: {
+                labels: riskData.labels,
+                datasets: [{
+                    data: riskData.data,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(54, 162, 235)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Department Access Chart
+        const deptCtx = document.getElementById('departmentChart').getContext('2d');
+        new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                labels: deptData.labels,
+                datasets: [{
+                    label: 'Access Count',
+                    data: deptData.data,
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgb(102, 126, 234)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hourly Activity Chart
+        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+        new Chart(hourlyCtx, {
+            type: 'radar',
+            data: {
+                labels: hourlyData.labels,
+                datasets: [{
+                    label: 'Activity by Hour',
+                    data: hourlyData.data,
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgb(255, 159, 64)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(255, 159, 64)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 159, 64)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Update recent activity table
+        const tbody = document.getElementById('recentActivity');
+        tbody.innerHTML = recentData.activities.map(activity => `
+            <tr>
+                <td><small>${activity.time}</small></td>
+                <td>${activity.event}</td>
+                <td>${activity.user}</td>
+                <td><span class="badge bg-${activity.status_color}">${activity.status}</span></td>
+            </tr>
+        `).join('');
+
+    }).catch(error => {
+        console.error('Error loading chart data:', error);
+        document.getElementById('recentActivity').innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-danger py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading data. Please refresh the page.
+                </td>
+            </tr>
+        `;
+    });
+});
+</script>
+{% endblock %}

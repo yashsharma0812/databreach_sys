@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Data Breach Prevention{% endblock %}
+
+{% block content %}
+<h2>Security Reports</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>High Risk Employees</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for emp in report_data.high_risk %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ emp.name }}
+                        <span class="badge bg-danger rounded-pill">{{ emp.risk_value }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Access by Department</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for dept in report_data.dept_access %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ dept.department }}
+                        <span class="badge bg-primary rounded-pill">{{ dept.access_count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Recent Alerts (Last 7 Days)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Alert ID</th>
+                        <th>Emp ID</th>
+                        <th>Severity</th>
+                        <th>Reason</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in report_data.recent_alerts %}
+                    <tr>
+                        <td>{{ alert.alert_id }}</td>
+                        <td>{{ alert.emp_id }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if alert.severity_level == 'Critical' else 'warning' }}">
+                                {{ alert.severity_level }}
+                            </span>
+                        </td>
+                        <td>{{ alert.reason }}</td>
+                        <td>{{ alert.alert_time }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if alert.status == 'Open' else 'success' }}">
+                                {{ alert.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

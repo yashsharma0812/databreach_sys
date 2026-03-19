@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Add Employee - Data Breach Prevention{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Add New Employee</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="emp_id" class="form-label">Employee ID</label>
+                        <input type="number" class="form-control" id="emp_id" name="emp_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="Developer">Developer</option>
+                            <option value="Security Admin">Security Admin</option>
+                            <option value="Analyst">Analyst</option>
+                            <option value="HR Manager">HR Manager</option>
+                            <option value="Data Engineer">Data Engineer</option>
+                            <option value="DBA">DBA</option>
+                            <option value="Auditor">Auditor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">Department</label>
+                        <input type="text" class="form-control" id="department" name="department" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                    <a href="{{ url_for('employees') }}" class="btn btn-secondary ms-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
