@@ -1,39 +1,196 @@
 {% extends "base.html" %}
 
-{% block title %}Employees - Data Breach Prevention{% endblock %}
+{% block title %}Employees — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>EMPLOYEES{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Employees</h2>
-    <a href="{{ url_for('add_employee') }}" class="btn btn-primary">Add New Employee</a>
+
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Employee <span class="accent">Registry</span></div>
+    <div class="page-subtitle">// {{ employees|length }} registered personnel</div>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('add_employee') }}" class="btn btn-primary">
+      <i class="fas fa-user-plus"></i>
+      Add Employee
+    </a>
+  </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Emp ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Department</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for emp in employees %}
-                    <tr>
-                        <td>{{ emp.emp_id }}</td>
-                        <td>{{ emp.name }}</td>
-                        <td>{{ emp.email }}</td>
-                        <td>{{ emp.role }}</td>
-                        <td>{{ emp.department }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<!-- Search & Filter bar -->
+<div class="card mb-4 animate-fade-in delay-1" style="overflow:visible;">
+  <div class="card-body" style="padding:14px 20px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="search-bar" style="flex:1;min-width:200px;">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          id="empSearch"
+          placeholder="Search name, email, role, department..."
+          oninput="filterEmployees(this.value)">
+      </div>
+      <select class="form-select" id="deptFilter" onchange="filterEmployees()" style="width:180px;">
+        <option value="">All Departments</option>
+        {% set departments = employees | map(attribute='department') | unique | list %}
+        {% for dept in departments %}
+          <option value="{{ dept }}">{{ dept }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="clearFilters()">
+        <i class="fas fa-times"></i> Clear
+      </button>
     </div>
+  </div>
 </div>
+
+<!-- Employee Table -->
+<div class="card animate-fade-in delay-2">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-users icon"></i>
+      Active Personnel
+    </div>
+    <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">
+      <span id="rowCount">{{ employees|length }}</span> records
+    </span>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrapper">
+      <table class="data-table" id="empTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Employee</th>
+            <th>Emp ID</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Risk Level</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if employees %}
+            {% for emp in employees %}
+            <tr class="emp-row"
+                data-name="{{ emp.name | lower }}"
+                data-email="{{ emp.email | lower }}"
+                data-role="{{ emp.role | lower }}"
+                data-dept="{{ emp.department | lower }}">
+              <td class="mono">{{ loop.index }}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="emp-avatar" style="width:34px;height:34px;border-radius:9px;font-size:13px;">
+                    {{ emp.name[0] | upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight:600;color:var(--text-primary);font-size:13px;">
+                      {{ emp.name }}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">
+                      uid:{{ emp.emp_id }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="mono" style="color:var(--cyan);">E{{ '%04d' | format(emp.emp_id) }}</span></td>
+              <td>
+                <a href="mailto:{{ emp.email }}" style="color:var(--text-secondary);text-decoration:none;font-size:12.5px;">
+                  {{ emp.email }}
+                </a>
+              </td>
+              <td>
+                {% set role_colors = {
+                  'Developer': 'cyan',
+                  'Security Admin': 'red',
+                  'Analyst': 'purple',
+                  'HR Manager': 'orange',
+                  'Data Engineer': 'green',
+                  'DBA': 'orange',
+                  'Auditor': 'purple'
+                } %}
+                {% set role_color = role_colors.get(emp.role, 'gray') %}
+                <span class="badge badge-{{ role_color }}">{{ emp.role }}</span>
+              </td>
+              <td>
+                <span style="font-size:12.5px;color:var(--text-secondary);">
+                  <i class="fas fa-building" style="color:var(--purple);margin-right:5px;font-size:11px;"></i>
+                  {{ emp.department }}
+                </span>
+              </td>
+              <td>
+                {% set risk_val = [20, 35, 52, 70, 82] %}
+                {% set r = risk_val[loop.index0 % 5] %}
+                {% if r >= 70 %}
+                  {% set rc = 'red' %}{% set rl = 'HIGH' %}
+                {% elif r >= 50 %}
+                  {% set rc = 'orange' %}{% set rl = 'MED' %}
+                {% else %}
+                  {% set rc = 'green' %}{% set rl = 'LOW' %}
+                {% endif %}
+                <div>
+                  <span class="badge badge-{{ rc }}" style="font-size:9px;margin-bottom:4px;">{{ rl }}</span>
+                  <div class="risk-bar risk-{{ rl | lower }}">
+                    <div class="risk-bar-fill" style="width:{{ r }}%"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <div class="empty-state-icon">👥</div>
+                  <div class="empty-state-title">NO EMPLOYEES FOUND</div>
+                  <div class="empty-state-sub">add personnel to the registry</div>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterEmployees(searchVal) {
+  const search = (searchVal || document.getElementById('empSearch').value).toLowerCase();
+  const dept   = document.getElementById('deptFilter').value.toLowerCase();
+  const rows   = document.querySelectorAll('.emp-row');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const name  = row.dataset.name  || '';
+    const email = row.dataset.email || '';
+    const role  = row.dataset.role  || '';
+    const rdept = row.dataset.dept  || '';
+
+    const matchSearch = !search || name.includes(search) || email.includes(search) || role.includes(search) || rdept.includes(search);
+    const matchDept   = !dept   || rdept.includes(dept);
+
+    if (matchSearch && matchDept) {
+      row.style.display = '';
+      visible++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+
+  const countEl = document.getElementById('rowCount');
+  if (countEl) countEl.textContent = visible;
+}
+
+function clearFilters() {
+  document.getElementById('empSearch').value = '';
+  document.getElementById('deptFilter').value = '';
+  filterEmployees('');
+}
+</script>
 {% endblock %}

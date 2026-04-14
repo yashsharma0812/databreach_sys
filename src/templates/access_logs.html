@@ -1,60 +1,191 @@
 {% extends "base.html" %}
 
-{% block title %}Access Logs - Data Breach Prevention{% endblock %}
+{% block title %}Access Logs — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>ACCESS LOGS{% endblock %}
 
 {% block content %}
-<h2>Access Logs</h2>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-8">
-                <input type="text" class="form-control" name="search" placeholder="Search by Emp ID or Action Type" value="{{ search }}">
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary me-2">Search</button>
-                <a href="{{ url_for('access_logs') }}" class="btn btn-secondary">Clear</a>
-            </div>
-        </form>
-    </div>
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Access <span class="accent">Audit Trail</span></div>
+    <div class="page-subtitle">// {{ logs|length }} events loaded (max 100)</div>
+  </div>
+  <div class="page-actions">
+    <span class="live-indicator" style="display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:var(--font-mono);color:var(--green);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);padding:4px 10px;border-radius:20px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:dotPulse 1.5s ease infinite;display:inline-block;"></span>
+      REAL-TIME AUDIT
+    </span>
+  </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Log ID</th>
-                        <th>Emp ID</th>
-                        <th>System ID</th>
-                        <th>Asset ID</th>
-                        <th>Action</th>
-                        <th>Timestamp</th>
-                        <th>IP Address</th>
-                        <th>Device Info</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log.log_id }}</td>
-                        <td>{{ log.emp_id }}</td>
-                        <td>{{ log.system_id }}</td>
-                        <td>{{ log.asset_id }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'success' if log.action_type == 'READ' else 'warning' if log.action_type == 'UPDATE' else 'danger' }}">
-                                {{ log.action_type }}
-                            </span>
-                        </td>
-                        <td>{{ log.event_timestamp }}</td>
-                        <td>{{ log.ip_address }}</td>
-                        <td>{{ log.device_info }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- Search & Filters -->
+<div class="card mb-4 animate-fade-in delay-1">
+  <div class="card-body" style="padding:14px 20px;">
+    <form method="GET" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="search-bar" style="flex:1;min-width:200px;">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          name="search"
+          id="logSearch"
+          placeholder="Search by Employee ID or Action Type..."
+          value="{{ search }}"
+          style="padding-left:40px;">
+      </div>
+      <select class="form-select" name="action" style="width:160px;">
+        <option value="">All Actions</option>
+        <option value="READ"     {% if request.args.get('action')=='READ'     %}selected{% endif %}>READ</option>
+        <option value="WRITE"    {% if request.args.get('action')=='WRITE'    %}selected{% endif %}>WRITE</option>
+        <option value="UPDATE"   {% if request.args.get('action')=='UPDATE'   %}selected{% endif %}>UPDATE</option>
+        <option value="DELETE"   {% if request.args.get('action')=='DELETE'   %}selected{% endif %}>DELETE</option>
+        <option value="DOWNLOAD" {% if request.args.get('action')=='DOWNLOAD' %}selected{% endif %}>DOWNLOAD</option>
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="fas fa-search"></i> Filter
+      </button>
+      <a href="{{ url_for('access_logs') }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-times"></i> Clear
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Stats Mini Bar -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;" class="animate-fade-in delay-2">
+  {% set action_types = ['READ','WRITE','UPDATE','DELETE','DOWNLOAD'] %}
+  {% set action_colors = ['green','cyan','orange','red','purple'] %}
+  {% set action_icons = ['fa-eye','fa-pen','fa-edit','fa-trash','fa-download'] %}
+  {% for i in range(5) %}
+  <div class="card" style="padding:14px 16px;border-color:rgba(0,0,0,0.2);cursor:pointer;"
+       onclick="document.querySelector('[name=action]').value='{{ action_types[i] }}';document.querySelector('form').submit();">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--{{ action_colors[i] }}-dim,rgba(0,212,255,0.12));color:var(--{{ action_colors[i] }},var(--cyan));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">
+        <i class="fas {{ action_icons[i] }}"></i>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:9px;letter-spacing:1.5px;color:var(--text-muted);">{{ action_types[i] }}</div>
+        <div style="font-size:16px;font-weight:700;font-family:var(--font-display);" class="text-{{ action_colors[i] }}">
+          {{ logs | selectattr('action_type', 'equalto', action_types[i]) | list | length }}
         </div>
+      </div>
     </div>
+  </div>
+  {% endfor %}
 </div>
+
+<!-- Logs Table -->
+<div class="card animate-fade-in delay-3">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-list-alt icon"></i>
+      Event Log
+    </div>
+    <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">
+      {{ logs|length }} records
+      {% if search %}— filtered by "<span style="color:var(--cyan);">{{ search }}</span>"{% endif %}
+    </span>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>Employee</th>
+            <th>System</th>
+            <th>Asset</th>
+            <th>Action</th>
+            <th>Timestamp</th>
+            <th>IP Address</th>
+            <th>Device</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if logs %}
+            {% for log in logs %}
+            <tr>
+              <td><span class="mono" style="color:var(--text-muted);">#{{ log.log_id }}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">
+                    {{ log.emp_id | string | truncate(2, true, '') }}
+                  </div>
+                  <span class="mono" style="color:var(--cyan);">EMP-{{ log.emp_id }}</span>
+                </div>
+              </td>
+              <td><span class="mono">SYS-{{ log.system_id }}</span></td>
+              <td><span class="mono">AST-{{ log.asset_id }}</span></td>
+              <td>
+                {% set action = log.action_type | upper %}
+                {% if action == 'READ' %}
+                  <span class="badge badge-read"><i class="fas fa-eye" style="font-size:9px;"></i> READ</span>
+                {% elif action == 'WRITE' %}
+                  <span class="badge badge-write"><i class="fas fa-pen" style="font-size:9px;"></i> WRITE</span>
+                {% elif action == 'UPDATE' %}
+                  <span class="badge badge-update"><i class="fas fa-edit" style="font-size:9px;"></i> UPDATE</span>
+                {% elif action == 'DELETE' %}
+                  <span class="badge badge-delete"><i class="fas fa-trash" style="font-size:9px;"></i> DELETE</span>
+                {% elif action == 'DOWNLOAD' %}
+                  <span class="badge badge-download"><i class="fas fa-download" style="font-size:9px;"></i> DOWNLOAD</span>
+                {% else %}
+                  <span class="badge badge-gray">{{ log.action_type }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-size:12px;color:var(--text-secondary);">
+                  {{ log.event_timestamp.strftime('%Y-%m-%d') if log.event_timestamp else '–' }}
+                </div>
+                <div class="mono" style="font-size:10px;color:var(--text-muted);">
+                  {{ log.event_timestamp.strftime('%H:%M:%S') if log.event_timestamp else '' }}
+                </div>
+              </td>
+              <td>
+                <span class="mono" style="font-size:11.5px;">
+                  <i class="fas fa-globe" style="color:var(--text-muted);margin-right:4px;font-size:10px;"></i>
+                  {{ log.ip_address or '–' }}
+                </span>
+              </td>
+              <td>
+                <span style="font-size:11.5px;color:var(--text-muted);" data-tooltip="{{ log.device_info }}">
+                  {% if log.device_info %}
+                    {% if 'Windows' in log.device_info %}🖥️{% elif 'Mac' in log.device_info %}🍎{% elif 'Linux' in log.device_info %}🐧{% else %}📱{% endif %}
+                    {{ log.device_info[:20] }}{% if log.device_info | length > 20 %}…{% endif %}
+                  {% else %}–{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📋</div>
+                  <div class="empty-state-title">NO LOGS FOUND</div>
+                  <div class="empty-state-sub">{% if search %}no results for "{{ search }}"{% else %}audit trail is empty{% endif %}</div>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live filter on keyup
+document.getElementById('logSearch').addEventListener('input', function() {
+  const val = this.value.toLowerCase();
+  const rows = document.querySelectorAll('.data-table tbody tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(val) ? '' : 'none';
+  });
+});
+</script>
 {% endblock %}

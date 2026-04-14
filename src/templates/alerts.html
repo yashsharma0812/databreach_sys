@@ -1,54 +1,185 @@
 {% extends "base.html" %}
 
-{% block title %}Alerts - Data Breach Prevention{% endblock %}
+{% block title %}Alerts — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>SECURITY ALERTS{% endblock %}
 
 {% block content %}
-<h2>Security Alerts</h2>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Alert ID</th>
-                        <th>Emp ID</th>
-                        <th>Severity</th>
-                        <th>Reason</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for alert in alerts %}
-                    <tr class="{{ 'table-warning' if alert.status == 'Open' else 'table-light' }}">
-                        <td>{{ alert.alert_id }}</td>
-                        <td>{{ alert.emp_id }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'danger' if alert.severity_level == 'Critical' else 'warning' if alert.severity_level == 'High' else 'info' }}">
-                                {{ alert.severity_level }}
-                            </span>
-                        </td>
-                        <td>{{ alert.reason }}</td>
-                        <td>{{ alert.alert_time }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'warning' if alert.status == 'Open' else 'success' }}">
-                                {{ alert.status }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if alert.status == 'Open' %}
-                            <form method="POST" action="{{ url_for('resolve_alert', alert_id=alert.alert_id) }}" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-success">Resolve</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Security <span class="accent">Alerts</span></div>
+    <div class="page-subtitle">// {{ alerts|length }} total · {{ alerts | selectattr('status','equalto','Open') | list | length }} open</div>
+  </div>
+  <div class="page-actions">
+    {% set open_count = alerts | selectattr('status','equalto','Open') | list | length %}
+    {% if open_count > 0 %}
+    <span style="font-size:12px;font-family:var(--font-mono);color:var(--red);padding:6px 14px;border-radius:20px;background:var(--red-dim);border:1px solid var(--red);animation:criticalPulse 1.5s ease infinite;">
+      <i class="fas fa-exclamation-circle" style="margin-right:5px;"></i>
+      {{ open_count }} OPEN ALERT{{ 's' if open_count > 1 }}
+    </span>
+    {% endif %}
+  </div>
 </div>
+
+<!-- Alert Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;" class="animate-fade-in delay-1">
+  {% set sev_list = [('Critical','red','fa-skull-crossbones'),('High','orange','fa-exclamation-triangle'),('Medium','cyan','fa-exclamation-circle'),('Low','green','fa-info-circle')] %}
+  {% for sev, color, icon in sev_list %}
+  <div class="card" style="padding:16px;border-color:rgba(0,0,0,0.2);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(var(--{{ color }}-rgb,0,212,255),0.12);display:flex;align-items:center;justify-content:center;font-size:16px;" class="text-{{ color }}">
+        <i class="fas {{ icon }}"></i>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;">{{ sev }}</div>
+        <div style="font-size:22px;font-weight:900;font-family:var(--font-display);" class="text-{{ color }}">
+          {{ alerts | selectattr('severity_level','equalto',sev) | list | length }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Filter Tabs -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;" class="animate-fade-in delay-2">
+  <button class="btn btn-ghost btn-sm active-filter" id="filter-all" onclick="filterAlerts('all',this)">
+    All <span class="nav-badge" style="position:static;margin-left:6px;animation:none;background:var(--text-muted);">{{ alerts|length }}</span>
+  </button>
+  <button class="btn btn-ghost btn-sm" id="filter-open" onclick="filterAlerts('Open',this)">
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--orange);display:inline-block;margin-right:5px;box-shadow:0 0 6px var(--orange);"></span>
+    Open
+  </button>
+  <button class="btn btn-ghost btn-sm" id="filter-investigating" onclick="filterAlerts('Investigating',this)">
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--cyan);display:inline-block;margin-right:5px;"></span>
+    Investigating
+  </button>
+  <button class="btn btn-ghost btn-sm" id="filter-resolved" onclick="filterAlerts('Resolved',this)">
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;"></span>
+    Resolved
+  </button>
+</div>
+
+<!-- Alert Cards -->
+<div id="alertContainer" class="animate-fade-in delay-3">
+  {% if alerts %}
+    {% for alert in alerts %}
+    {% set sev = alert.severity_level | lower %}
+    {% set sev_color = {'critical':'red','high':'orange','medium':'cyan','low':'green'}.get(sev,'gray') %}
+    <div class="alert-card {{ sev }}" data-status="{{ alert.status }}">
+
+      <!-- Header Row -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="alert-severity-dot {{ sev }}"></span>
+          <span class="badge badge-{{ sev_color }} badge-{{ sev }}">
+            <i class="fas fa-{{ 'skull-crossbones' if sev=='critical' else 'exclamation-triangle' if sev=='high' else 'exclamation-circle' if sev=='medium' else 'info-circle' }}" style="font-size:9px;"></i>
+            {{ alert.severity_level | upper }}
+          </span>
+          <span class="badge {{ 'badge-open' if alert.status=='Open' else 'badge-resolved' if alert.status=='Resolved' else 'badge-investigating' }}">
+            {{ alert.status | upper }}
+          </span>
+          <span class="mono" style="font-size:11px;color:var(--text-muted);">#{{ alert.alert_id }}</span>
+        </div>
+        <span class="mono" style="font-size:11px;color:var(--text-muted);white-space:nowrap;">
+          <i class="fas fa-clock" style="margin-right:4px;"></i>
+          {{ alert.alert_time.strftime('%Y-%m-%d %H:%M') if alert.alert_time else '–' }}
+        </span>
+      </div>
+
+      <!-- Reason -->
+      <div style="font-size:14px;color:var(--text-primary);font-weight:500;margin-bottom:10px;line-height:1.5;">
+        <i class="fas fa-exclamation-circle" style="color:var(--{{ sev_color }});margin-right:8px;"></i>
+        {{ alert.reason }}
+      </div>
+
+      <!-- Meta Row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:12px;color:var(--text-muted);">
+            <i class="fas fa-user" style="margin-right:5px;color:var(--cyan);"></i>
+            Employee <span class="mono" style="color:var(--cyan);">EMP-{{ alert.emp_id }}</span>
+          </span>
+          <span style="font-size:12px;color:var(--text-muted);">
+            <i class="fas fa-tag" style="margin-right:5px;"></i>
+            Alert ID <span class="mono">{{ alert.alert_id }}</span>
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:8px;">
+          {% if alert.status == 'Open' %}
+          <form method="POST" action="{{ url_for('resolve_alert', alert_id=alert.alert_id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="fas fa-check"></i> Resolve
+            </button>
+          </form>
+          <button class="btn btn-ghost btn-sm" onclick="showDetails({{ alert.alert_id }})">
+            <i class="fas fa-eye"></i> Details
+          </button>
+          {% elif alert.status == 'Investigating' %}
+          <button class="btn btn-ghost btn-sm" style="color:var(--cyan);border-color:var(--cyan);">
+            <i class="fas fa-search"></i> Investigating
+          </button>
+          {% else %}
+          <span class="badge badge-resolved" style="font-size:11px;padding:5px 12px;">
+            <i class="fas fa-check-circle" style="font-size:10px;"></i> RESOLVED
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card">
+      <div class="card-body">
+        <div class="empty-state">
+          <div class="empty-state-icon">✅</div>
+          <div class="empty-state-title">NO ALERTS</div>
+          <div class="empty-state-sub">all systems operating normally</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterAlerts(status, btn) {
+  // Update active button style
+  document.querySelectorAll('[id^="filter-"]').forEach(b => {
+    b.style.background = '';
+    b.style.borderColor = '';
+    b.style.color = '';
+  });
+  if (btn) {
+    btn.style.background = 'var(--cyan-dim)';
+    btn.style.borderColor = 'var(--cyan)';
+    btn.style.color = 'var(--cyan)';
+  }
+
+  const cards = document.querySelectorAll('.alert-card');
+  cards.forEach(card => {
+    if (status === 'all' || card.dataset.status === status) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function showDetails(id) {
+  // Simple inline detail expansion – could be enhanced with a modal
+  alert(`Alert #${id} details would open a modal in the full version.`);
+}
+
+// Auto-activate "All" filter on load
+document.getElementById('filter-all').style.background = 'var(--cyan-dim)';
+document.getElementById('filter-all').style.borderColor = 'var(--cyan)';
+document.getElementById('filter-all').style.color = 'var(--cyan)';
+</script>
 {% endblock %}

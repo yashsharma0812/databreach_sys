@@ -1,87 +1,244 @@
 {% extends "base.html" %}
 
-{% block title %}Reports - Data Breach Prevention{% endblock %}
+{% block title %}Reports — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>REPORTS{% endblock %}
 
 {% block content %}
-<h2>Security Reports</h2>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>High Risk Employees</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for emp in report_data.high_risk %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ emp.name }}
-                        <span class="badge bg-danger rounded-pill">{{ emp.risk_value }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Access by Department</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for dept in report_data.dept_access %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ dept.department }}
-                        <span class="badge bg-primary rounded-pill">{{ dept.access_count }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Security <span class="accent">Intelligence</span></div>
+    <div class="page-subtitle">// threat analytics · risk profiles · incident reports</div>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" onclick="window.print()">
+      <i class="fas fa-print"></i> Print
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="exportReport()">
+      <i class="fas fa-file-export"></i> Export
+    </button>
+  </div>
 </div>
 
-<div class="card">
+<!-- KPI Strip -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;" class="animate-fade-in delay-1">
+  <div class="card" style="padding:20px;border-color:rgba(255,51,102,0.2);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--red-dim);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,51,102,0.2);">
+        <i class="fas fa-user-shield"></i>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">High Risk Personnel</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);" data-count="{{ report_data.high_risk | length }}">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;border-color:rgba(255,140,0,0.2);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--orange-dim);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,140,0,0.2);">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Alerts (Last 7 Days)</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--orange);text-shadow:var(--orange-glow);" data-count="{{ report_data.recent_alerts | length }}">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;border-color:rgba(0,212,255,0.2);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;border-radius:12px;background:var(--cyan-dim);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(0,212,255,0.2);">
+        <i class="fas fa-building"></i>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:9px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:3px;">Departments Monitored</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--cyan);text-shadow:var(--cyan-glow);" data-count="{{ report_data.dept_access | length }}">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Grid -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+
+  <!-- High Risk Employees -->
+  <div class="card animate-fade-in delay-2">
     <div class="card-header">
-        <h5>Recent Alerts (Last 7 Days)</h5>
+      <div class="card-title">
+        <i class="fas fa-user-times icon" style="color:var(--red);"></i>
+        High Risk Personnel
+      </div>
+      <span style="font-size:10px;color:var(--red);font-family:var(--font-mono);background:var(--red-dim);padding:3px 8px;border-radius:20px;border:1px solid var(--red);">
+        RISK > 70
+      </span>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Alert ID</th>
-                        <th>Emp ID</th>
-                        <th>Severity</th>
-                        <th>Reason</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for alert in report_data.recent_alerts %}
-                    <tr>
-                        <td>{{ alert.alert_id }}</td>
-                        <td>{{ alert.emp_id }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'danger' if alert.severity_level == 'Critical' else 'warning' }}">
-                                {{ alert.severity_level }}
-                            </span>
-                        </td>
-                        <td>{{ alert.reason }}</td>
-                        <td>{{ alert.alert_time }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'warning' if alert.status == 'Open' else 'success' }}">
-                                {{ alert.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      {% if report_data.high_risk %}
+        {% for emp in report_data.high_risk %}
+        <div class="report-stat-row" style="{% if loop.first %}padding-top:0;{% endif %}">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+            <div class="emp-avatar" style="width:32px;height:32px;border-radius:8px;font-size:12px;flex-shrink:0;background:linear-gradient(135deg,var(--red),var(--orange));">
+              {{ emp.name[0] | upper }}
+            </div>
+            <div style="min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ emp.name }}
+              </div>
+              <div class="risk-bar risk-high" style="width:80px;margin-top:4px;">
+                <div class="risk-bar-fill" style="width:{{ emp.risk_value }}%"></div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--font-display);font-size:18px;font-weight:900;color:var(--red);text-shadow:var(--red-glow);">
+              {{ emp.risk_value }}
+            </div>
+            <div style="font-size:9px;color:var(--text-muted);font-family:var(--font-mono);">/ 100</div>
+          </div>
         </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state" style="padding:30px 20px;">
+          <div class="empty-state-icon">✅</div>
+          <div class="empty-state-title">NO HIGH-RISK EMPLOYEES</div>
+          <div class="empty-state-sub">all risk scores below threshold</div>
+        </div>
+      {% endif %}
     </div>
+  </div>
+
+  <!-- Department Access Chart -->
+  <div class="card animate-fade-in delay-3">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-bar icon"></i>
+        Department Access Distribution
+      </div>
+    </div>
+    <div class="card-body">
+      {% if report_data.dept_access %}
+        {% set max_count = report_data.dept_access | map(attribute='access_count') | max %}
+        {% set dept_colors = ['cyan','purple','green','orange','red'] %}
+        {% for dept in report_data.dept_access %}
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar-label">
+            <span class="name">
+              <span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--{{ dept_colors[loop.index0 % 5] }});"></span>
+              {{ dept.department }}
+            </span>
+            <span class="val">{{ dept.access_count }}</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill {{ dept_colors[loop.index0 % 5] }}"
+                 style="width:{{ ((dept.access_count / max_count) * 100) | int if max_count > 0 else 0 }}%">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state" style="padding:30px 20px;">
+          <div class="empty-state-icon">📊</div>
+          <div class="empty-state-title">NO ACCESS DATA</div>
+          <div class="empty-state-sub">no department access recorded</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
+
+<!-- Recent Alerts Table -->
+<div class="card animate-fade-in delay-4">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-history icon"></i>
+      Recent Security Events
+      <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);font-weight:400;letter-spacing:0;">
+        — last 7 days
+      </span>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Alert ID</th>
+            <th>Employee</th>
+            <th>Severity</th>
+            <th>Description</th>
+            <th>Timestamp</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if report_data.recent_alerts %}
+            {% for alert in report_data.recent_alerts %}
+            {% set sev = alert.severity_level | lower %}
+            {% set sev_color = {'critical':'red','high':'orange','medium':'cyan','low':'green'}.get(sev,'gray') %}
+            <tr>
+              <td><span class="mono" style="color:var(--text-muted);">#{{ alert.alert_id }}</span></td>
+              <td><span class="mono" style="color:var(--cyan);">EMP-{{ alert.emp_id }}</span></td>
+              <td>
+                <span class="badge badge-{{ sev_color }} badge-{{ sev }}">{{ alert.severity_level }}</span>
+              </td>
+              <td style="max-width:280px;">
+                <span style="font-size:12.5px;color:var(--text-secondary);white-space:normal;">
+                  {{ alert.reason }}
+                </span>
+              </td>
+              <td>
+                <div class="mono" style="font-size:11px;color:var(--text-muted);">
+                  {{ alert.alert_time.strftime('%Y-%m-%d %H:%M') if alert.alert_time else '–' }}
+                </div>
+              </td>
+              <td>
+                <span class="badge {{ 'badge-open' if alert.status=='Open' else 'badge-resolved' if alert.status=='Resolved' else 'badge-investigating' }}">
+                  {{ alert.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-state-icon">✅</div>
+                  <div class="empty-state-title">NO RECENT ALERTS</div>
+                  <div class="empty-state-sub">no incidents in the last 7 days</div>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportReport() {
+  const btn = event.target.closest('button');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fas fa-check"></i> Exported!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#000';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.disabled = false;
+      window.print();
+    }, 1200);
+  }, 800);
+}
+</script>
 {% endblock %}

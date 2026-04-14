@@ -1,83 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Enterprise Data Breach Prevention System{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    {% block head %}{% endblock %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}EnterpriseGuard | Cyber Security Platform{% endblock %}</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  {% block head %}{% endblock %}
+
+  <style>
+    /* Bootstrap-compat layer for Chart.js responsiveness */
+    .row { display: flex; flex-wrap: wrap; margin: -8px; }
+    .col-12 { width: 100%; padding: 8px; }
+    .col-md-6 { width: 50%; padding: 8px; }
+    .col-lg-4 { width: 33.33%; padding: 8px; }
+    .col-lg-6 { width: 50%; padding: 8px; }
+    .col-lg-8 { width: 66.66%; padding: 8px; }
+    @media (max-width: 768px) {
+      .col-md-6, .col-lg-4, .col-lg-6, .col-lg-8 { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">
-                <i class="fas fa-shield-alt me-2"></i>Data Breach Prevention
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('employees') }}">
-                            <i class="fas fa-users me-1"></i>Employees
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('access_logs') }}">
-                            <i class="fas fa-history me-1"></i>Access Logs
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('alerts') }}">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Alerts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('reports') }}">
-                            <i class="fas fa-chart-bar me-1"></i>Reports
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i>{{ session.username }}
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-info">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
+<!-- Canvas for particles -->
+<canvas id="bg-canvas" style="position:fixed;top:0;left:0;pointer-events:none;z-index:0;opacity:0.35;"></canvas>
+
+<div class="layout-wrapper">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <a class="sidebar-logo" href="{{ url_for('home') }}">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">
+        <div class="logo-title">ENTERPRISE</div>
+        <div class="logo-subtitle">GUARD // v2.0</div>
+      </div>
+    </a>
+
+    <!-- Threat Meter -->
+    <div class="threat-meter">
+      <div class="threat-meter-label">
+        <span>THREAT LEVEL</span>
+        <span class="threat-level-badge" id="threatLabel">ELEVATED</span>
+      </div>
+      <div class="threat-bar-track">
+        <div class="threat-bar-fill" id="threatBar" style="width:65%"></div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    {% block scripts %}{% endblock %}
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">MAIN MENU</div>
+
+      <a href="{{ url_for('home') }}"
+         class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="{{ url_for('employees') }}"
+         class="nav-item {% if request.endpoint in ['employees', 'add_employee'] %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-users"></i></div>
+        <span>Employees</span>
+      </a>
+
+      <a href="{{ url_for('access_logs') }}"
+         class="nav-item {% if request.endpoint == 'access_logs' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-list-alt"></i></div>
+        <span>Access Logs</span>
+      </a>
+
+      <a href="{{ url_for('alerts') }}"
+         class="nav-item {% if request.endpoint == 'alerts' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-bell"></i></div>
+        <span>Alerts</span>
+        <span class="nav-badge" id="alertBadge" style="display:none">0</span>
+      </a>
+
+      <a href="{{ url_for('reports') }}"
+         class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-section-title" style="margin-top:16px;">QUICK ADD</div>
+
+      <a href="{{ url_for('add_employee') }}"
+         class="nav-item {% if request.endpoint == 'add_employee' %}active{% endif %}">
+        <div class="nav-icon"><i class="fas fa-user-plus"></i></div>
+        <span>Add Employee</span>
+      </a>
+    </nav>
+
+    <!-- System Status -->
+    <div class="sidebar-status">
+      <div class="status-row">
+        <span class="status-dot online"></span>
+        <span>Database Connected</span>
+      </div>
+      <div class="status-row">
+        <span class="status-dot online"></span>
+        <span>Monitoring Active</span>
+      </div>
+      <div class="status-row">
+        <span class="status-dot warning"></span>
+        <span>2 Active Alerts</span>
+      </div>
+    </div>
+
+    <!-- User Block -->
+    <div class="sidebar-user">
+      <div class="user-avatar">A</div>
+      <div class="user-info">
+        <div class="user-name">{{ session.username | upper if session.username else 'ADMIN' }}</div>
+        <div class="user-role">Security Admin</div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+        <i class="fas fa-sign-out-alt"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN WRAPPER ═══════════ -->
+  <div class="main-wrapper">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <!-- Mobile menu button -->
+      <button class="topbar-icon-btn" id="sidebarToggle" style="display:none;">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="topbar-title">
+        {% block breadcrumb %}
+          ENTERPRISE<span>/</span>DASHBOARD
+        {% endblock %}
+      </div>
+
+      <!-- Live Clock -->
+      <div class="live-clock" id="liveClock">--:--:--</div>
+
+      <div class="topbar-actions">
+        <a href="{{ url_for('alerts') }}" class="topbar-icon-btn" title="Alerts">
+          <i class="fas fa-bell"></i>
+          <span class="notif-dot"></span>
+        </a>
+        <a href="{{ url_for('reports') }}" class="topbar-icon-btn" title="Reports">
+          <i class="fas fa-chart-bar"></i>
+        </a>
+        <a href="{{ url_for('logout') }}" class="topbar-icon-btn" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash-container">
+            {% for message in messages %}
+              <div class="flash-msg">
+                <i class="fas fa-info-circle"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+  </div><!-- end main-wrapper -->
+</div><!-- end layout-wrapper -->
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+/* ─── Live Clock ─────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('liveClock');
+  if (el) el.textContent = `${h}:${m}:${s}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ─── Background Particle Canvas ─────────────────────── */
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const PARTICLE_COUNT = 60;
+  const particles = [];
+  const CYAN = '0, 212, 255';
+  const PURPLE = '139, 92, 246';
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push({
+      x:  Math.random() * window.innerWidth,
+      y:  Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r:  Math.random() * 2 + 1,
+      color: Math.random() > 0.5 ? CYAN : PURPLE
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 130) {
+          const alpha = (1 - dist / 130) * 0.25;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(${particles[i].color}, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw particles
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color}, 0.7)`;
+      ctx.fill();
+
+      // Move
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ─── Mobile Sidebar Toggle ─────────────────────────── */
+const sidebarToggle = document.getElementById('sidebarToggle');
+const sidebar = document.getElementById('sidebar');
+if (sidebarToggle) {
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+}
+if (window.innerWidth <= 768 && sidebarToggle) {
+  sidebarToggle.style.display = 'flex';
+}
+
+/* ─── CountUp Animation ─────────────────────────────── */
+function animateCount(el, target, duration) {
+  const start = 0;
+  const step = (timestamp) => {
+    if (!el._start) el._start = timestamp;
+    const progress = Math.min((timestamp - el._start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (target - start) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = parseFloat(el.dataset.count);
+    animateCount(el, target, 1400);
+  });
+});
+
+/* ─── Fetch + show alert badge ───────────────────────── */
+fetch('/api/open_alerts_count').then(r => r.json()).then(d => {
+  const badge = document.getElementById('alertBadge');
+  if (badge && d.count > 0) {
+    badge.textContent = d.count;
+    badge.style.display = 'inline-block';
+  }
+}).catch(() => {});
+</script>
+
+{% block scripts %}{% endblock %}
 </body>
 </html>

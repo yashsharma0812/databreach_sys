@@ -240,7 +240,7 @@ def department_access():
     if connection:
         cursor = connection.cursor(dictionary=True)
         cursor.execute("""
-            SELECT e.department, COUNT(al.id) as access_count
+            SELECT e.department, COUNT(al.log_id) as access_count
             FROM employee e
             LEFT JOIN access_log al ON e.emp_id = al.emp_id
             GROUP BY e.department
@@ -289,8 +289,8 @@ def recent_activity():
             SELECT
                 al.event_timestamp,
                 CONCAT(e.name, ' (', e.emp_id, ')') as user_name,
-                al.action,
-                al.status
+                al.action_type,
+                al.ip_address
             FROM access_log al
             JOIN employee e ON al.emp_id = e.emp_id
             ORDER BY al.event_timestamp DESC
@@ -298,19 +298,35 @@ def recent_activity():
         """)
         rows = cursor.fetchall()
         for row in rows:
+            action = row['action_type'] or 'ACCESS'
             status_color = {
-                'Success': 'success',
-                'Failed': 'danger',
-                'Blocked': 'warning'
-            }.get(row['status'], 'secondary')
+                'READ':     'success',
+                'WRITE':    'secondary',
+                'UPDATE':   'warning',
+                'DELETE':   'danger',
+                'DOWNLOAD': 'secondary'
+            }.get(action, 'secondary')
 
             data['activities'].append({
-                'time': row['event_timestamp'].strftime('%H:%M:%S'),
-                'event': row['action'],
+                'time': row['event_timestamp'].strftime('%H:%M:%S') if row['event_timestamp'] else '--:--:--',
+                'event': action,
                 'user': row['user_name'],
-                'status': row['status'],
+                'status': action,
                 'status_color': status_color
             })
+        cursor.close()
+        connection.close()
+    return jsonify(data)
+
+@app.route('/api/open_alerts_count')
+def open_alerts_count():
+    connection = get_db_connection()
+    data = {'count': 0}
+    if connection:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) as count FROM alert WHERE status = 'Open'")
+        result = cursor.fetchone()
+        data['count'] = result['count'] if result else 0
         cursor.close()
         connection.close()
     return jsonify(data)

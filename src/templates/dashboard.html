@@ -1,391 +1,639 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Data Breach Prevention{% endblock %}
+{% block title %}Dashboard — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>DASHBOARD{% endblock %}
 
 {% block head %}
 <style>
-.stats-icon {
-    font-size: 2rem;
-    opacity: 0.8;
-    margin-bottom: 0.5rem;
-}
+  .hex-grid {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zm0 0v34' fill='none' stroke='%2300d4ff' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 56px 100px;
+  }
+
+  .security-score-ring {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .security-score-ring svg {
+    transform: rotate(-90deg);
+    width: 120px;
+    height: 120px;
+  }
+
+  .security-score-ring .ring-bg {
+    fill: none;
+    stroke: rgba(0,212,255,0.1);
+    stroke-width: 8;
+  }
+
+  .security-score-ring .ring-fill {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 314;
+    stroke-dashoffset: 110;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1);
+    filter: drop-shadow(0 0 6px rgba(0,212,255,0.6));
+  }
+
+  .ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .ring-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 15px rgba(0,212,255,0.6);
+    line-height: 1;
+  }
+
+  .ring-unit {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: dotPulse 1.5s ease infinite;
+  }
+
+  .chart-label-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .chart-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chart-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="display-4 text-center mb-4" style="color: var(--primary-color); font-weight: 700;">
-            🛡️ Enterprise Security Dashboard
-        </h1>
-        <p class="text-center text-muted mb-5">Real-time monitoring and analytics for data breach prevention</p>
-    </div>
+
+<div class="hex-grid"></div>
+
+<!-- Page Header -->
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Security <span class="accent">Dashboard</span></div>
+    <div class="page-subtitle">// real-time threat monitoring & analytics</div>
+  </div>
+  <div class="page-actions">
+    <span class="live-indicator">
+      <span class="live-dot"></span>
+      LIVE MONITORING
+    </span>
+    <a href="{{ url_for('reports') }}" class="btn btn-ghost btn-sm">
+      <i class="fas fa-file-export"></i> Export
+    </a>
+  </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- Stats Grid -->
+<div class="stats-grid">
+
+  <div class="stat-card cyan animate-fade-in delay-1">
+    <div class="stat-card-trend trend-up">+2.1%</div>
+    <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+    <div class="stat-card-value" data-count="{{ stats.employees }}">0</div>
+    <div class="stat-card-label">Total Employees</div>
+    <div class="stat-card-sub">// active workforce</div>
+  </div>
+
+  <div class="stat-card green animate-fade-in delay-2">
+    <div class="stat-card-trend trend-up">+18 today</div>
+    <div class="stat-card-icon"><i class="fas fa-database"></i></div>
+    <div class="stat-card-value" data-count="{{ stats.logs }}">0</div>
+    <div class="stat-card-label">Access Events</div>
+    <div class="stat-card-sub">// audit trail entries</div>
+  </div>
+
+  <div class="stat-card orange animate-fade-in delay-3">
+    <div class="stat-card-trend trend-mid">NEEDS REVIEW</div>
+    <div class="stat-card-icon"><i class="fas fa-bell"></i></div>
+    <div class="stat-card-value" data-count="{{ stats.open_alerts }}">0</div>
+    <div class="stat-card-label">Open Alerts</div>
+    <div class="stat-card-sub">// require immediate attention</div>
+  </div>
+
+  <div class="stat-card red animate-fade-in delay-4">
+    <div class="stat-card-trend trend-down">HIGH</div>
+    <div class="stat-card-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="stat-card-value" data-count="{{ stats.avg_risk | int }}">0</div>
+    <div class="stat-card-label">Avg Risk Score</div>
+    <div class="stat-card-sub">// composite threat index</div>
+  </div>
+
+</div>
+
+<!-- Charts Row 1 -->
+<div class="charts-grid mb-5">
+
+  <!-- Activity Trend -->
+  <div class="card animate-fade-in delay-1">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-chart-line icon"></i>
+        30-Day Activity Trend
+      </div>
+      <span class="live-indicator">
+        <span class="live-dot"></span>LIVE
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrapper">
+        <canvas id="activityChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Distribution -->
+  <div class="card animate-fade-in delay-2">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-bullseye icon"></i>
+        Risk Distribution
+      </div>
+    </div>
+    <div class="card-body" style="display:flex;align-items:center;gap:24px;">
+      <!-- Security Score Ring -->
+      <div class="security-score-ring">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00d4ff"/>
+              <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="60" cy="60" r="50"/>
+          <circle class="ring-fill" id="scoreRing" cx="60" cy="60" r="50"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="scoreValue">--</div>
+          <div class="ring-unit">SCORE</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <canvas id="riskChart" style="height:220px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Charts Row 2 -->
+<div class="charts-grid mb-5">
+
+  <!-- Department Access -->
+  <div class="card animate-fade-in delay-1">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-building icon"></i>
+        Department Access
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrapper">
+        <canvas id="departmentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hourly Activity Heatmap -->
+  <div class="card animate-fade-in delay-2">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-clock icon"></i>
+        Hourly Activity Pattern
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrapper">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Row: Quick Actions + System Status + Recent Activity -->
 <div class="row mb-5">
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="stats-icon">👥</div>
-                <h5 class="card-title">Total Employees</h5>
-                <h2>{{ stats.employees }}</h2>
-                <small class="opacity-75">Active workforce</small>
+
+  <!-- Quick Actions -->
+  <div class="col-lg-4">
+    <div class="card h-100 animate-fade-in delay-1">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-bolt icon"></i>Quick Actions</div>
+      </div>
+      <div class="card-body">
+        <div class="quick-action-grid">
+          <a href="{{ url_for('add_employee') }}" class="quick-action-item">
+            <div class="qa-icon" style="background:var(--cyan-dim);color:var(--cyan);">
+              <i class="fas fa-user-plus"></i>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="card stats-card success h-100">
-            <div class="card-body">
-                <div class="stats-icon">📊</div>
-                <h5 class="card-title">Access Logs</h5>
-                <h2>{{ stats.logs }}</h2>
-                <small class="opacity-75">Total activities</small>
+            <div>
+              <div class="qa-text">Add Employee</div>
+              <div class="qa-sub">Register new user access</div>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="card stats-card warning h-100">
-            <div class="card-body">
-                <div class="stats-icon">🚨</div>
-                <h5 class="card-title">Open Alerts</h5>
-                <h2>{{ stats.open_alerts }}</h2>
-                <small class="opacity-75">Require attention</small>
+            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-muted);font-size:11px;"></i>
+          </a>
+
+          <a href="{{ url_for('alerts') }}" class="quick-action-item">
+            <div class="qa-icon" style="background:var(--orange-dim);color:var(--orange);">
+              <i class="fas fa-exclamation-triangle"></i>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="card stats-card danger h-100">
-            <div class="card-body">
-                <div class="stats-icon">⚠️</div>
-                <h5 class="card-title">Avg Risk Score</h5>
-                <h2>{{ stats.avg_risk }}</h2>
-                <small class="opacity-75">Risk assessment</small>
+            <div>
+              <div class="qa-text">View Alerts</div>
+              <div class="qa-sub">{{ stats.open_alerts }} open require review</div>
             </div>
+            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-muted);font-size:11px;"></i>
+          </a>
+
+          <a href="{{ url_for('access_logs') }}" class="quick-action-item">
+            <div class="qa-icon" style="background:var(--green-dim);color:var(--green);">
+              <i class="fas fa-list-alt"></i>
+            </div>
+            <div>
+              <div class="qa-text">Access Logs</div>
+              <div class="qa-sub">Audit all system events</div>
+            </div>
+            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-muted);font-size:11px;"></i>
+          </a>
+
+          <a href="{{ url_for('reports') }}" class="quick-action-item">
+            <div class="qa-icon" style="background:var(--purple-dim);color:var(--purple);">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div>
+              <div class="qa-text">Generate Report</div>
+              <div class="qa-sub">Security analytics & insights</div>
+            </div>
+            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-muted);font-size:11px;"></i>
+          </a>
         </div>
+      </div>
     </div>
+  </div>
+
+  <!-- System Status -->
+  <div class="col-lg-4">
+    <div class="card h-100 animate-fade-in delay-2">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-server icon"></i>System Health</div>
+      </div>
+      <div class="card-body">
+
+        <div style="margin-bottom:20px;">
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar-label">
+              <span class="name"><i class="fas fa-database" style="color:var(--cyan);margin-right:6px;"></i>Database</span>
+              <span class="val" style="color:var(--green);">ONLINE</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill green" style="width:97%"></div></div>
+          </div>
+
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar-label">
+              <span class="name"><i class="fas fa-shield-alt" style="color:var(--cyan);margin-right:6px;"></i>Firewall</span>
+              <span class="val" style="color:var(--green);">ACTIVE</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill green" style="width:100%"></div></div>
+          </div>
+
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar-label">
+              <span class="name"><i class="fas fa-eye" style="color:var(--cyan);margin-right:6px;"></i>Monitoring</span>
+              <span class="val" style="color:var(--green);">RUNNING</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill cyan" style="width:88%"></div></div>
+          </div>
+
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar-label">
+              <span class="name"><i class="fas fa-exclamation" style="color:var(--orange);margin-right:6px;"></i>Threat Intel</span>
+              <span class="val" style="color:var(--orange);">ELEVATED</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill orange" style="width:65%"></div></div>
+          </div>
+        </div>
+
+        <!-- Terminal-style box -->
+        <div class="terminal-box" style="font-size:11px;line-height:1.8;">
+          <div><span style="color:var(--text-muted);">$</span> sys.status.check()</div>
+          <div style="color:var(--green);">  ✓ auth_module  [OK]</div>
+          <div style="color:var(--green);">  ✓ db_conn      [OK]</div>
+          <div style="color:var(--orange);">  ⚠ threat_level [ELEVATED]</div>
+          <div style="color:var(--cyan);">  → monitoring   [ACTIVE]</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="col-lg-4">
+    <div class="card h-100 animate-fade-in delay-3">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-history icon"></i>Recent Events</div>
+        <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
+      </div>
+      <div class="card-body" style="padding-top:8px;">
+        <div id="recentActivityFeed">
+          <div style="text-align:center;padding:30px;color:var(--text-muted);">
+            <div class="spinner"></div>
+            <div style="margin-top:10px;font-size:12px;font-family:var(--font-mono);">loading events...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Charts Section -->
-<div class="row mb-5">
-    <div class="col-lg-6 mb-4">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">📈 Activity Trends</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="activityChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">🎯 Risk Distribution</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="riskChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-5">
-    <div class="col-lg-6 mb-4">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">🏢 Department Access</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="departmentChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card chart-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">⏰ Hourly Activity</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="hourlyChart" width="400" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions & System Status -->
-<div class="row mb-5">
-    <div class="col-lg-6 mb-4">
-        <div class="card action-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">⚡ Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-3">
-                    <a href="{{ url_for('add_employee') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-user-plus me-2"></i>Add New Employee
-                    </a>
-                    <a href="{{ url_for('reports') }}" class="btn btn-info btn-lg">
-                        <i class="fas fa-chart-bar me-2"></i>Generate Reports
-                    </a>
-                    <a href="{{ url_for('alerts') }}" class="btn btn-warning btn-lg">
-                        <i class="fas fa-exclamation-triangle me-2"></i>View Alerts
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="card status-card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">🛡️ System Status</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-12">
-                        <div class="status-item success">
-                            <i class="fas fa-database me-3 fs-4"></i>
-                            <div>
-                                <strong>Database</strong><br>
-                                <small>Connected & Healthy</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="status-item info">
-                            <i class="fas fa-clock me-3 fs-4"></i>
-                            <div>
-                                <strong>Last Update</strong><br>
-                                <small>Real-time Monitoring</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="status-item danger">
-                            <i class="fas fa-lock me-3 fs-4"></i>
-                            <div>
-                                <strong>Security Level</strong><br>
-                                <small>High Protection Active</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity Feed -->
-<div class="row">
-    <div class="col-12">
-        <div class="card activity-card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">📋 Recent Security Events</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Event</th>
-                                <th>User</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentActivity">
-                            <tr>
-                                <td colspan="4" class="text-center py-4">
-                                    <div class="loading"></div>
-                                    <span class="ms-2">Loading recent activity...</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load all chart data
-    Promise.all([
-        fetch('/api/chart_data').then(r => r.json()),
-        fetch('/api/risk_distribution').then(r => r.json()),
-        fetch('/api/department_access').then(r => r.json()),
-        fetch('/api/hourly_activity').then(r => r.json()),
-        fetch('/api/recent_activity').then(r => r.json())
-    ]).then(([activityData, riskData, deptData, hourlyData, recentData]) => {
 
-        // Activity Chart
-        const activityCtx = document.getElementById('activityChart').getContext('2d');
-        new Chart(activityCtx, {
-            type: 'line',
-            data: {
-                labels: activityData.labels,
-                datasets: [{
-                    label: 'Daily Access Count',
-                    data: activityData.data,
-                    borderColor: 'rgb(102, 126, 234)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: 'rgb(102, 126, 234)',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    }
-                }
-            }
-        });
+  // Chart.js defaults for dark theme
+  Chart.defaults.color = '#64748b';
+  Chart.defaults.borderColor = 'rgba(0,212,255,0.08)';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 11;
 
-        // Risk Distribution Chart
-        const riskCtx = document.getElementById('riskChart').getContext('2d');
-        new Chart(riskCtx, {
-            type: 'doughnut',
-            data: {
-                labels: riskData.labels,
-                datasets: [{
-                    data: riskData.data,
-                    backgroundColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(255, 205, 86)',
-                        'rgb(75, 192, 192)',
-                        'rgb(54, 162, 235)'
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
+  const CYAN    = '#00d4ff';
+  const PURPLE  = '#8b5cf6';
+  const GREEN   = '#00ff88';
+  const ORANGE  = '#ff8c00';
+  const RED     = '#ff3366';
 
-        // Department Access Chart
-        const deptCtx = document.getElementById('departmentChart').getContext('2d');
-        new Chart(deptCtx, {
-            type: 'bar',
-            data: {
-                labels: deptData.labels,
-                datasets: [{
-                    label: 'Access Count',
-                    data: deptData.data,
-                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                    borderColor: 'rgb(102, 126, 234)',
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(0,0,0,0.05)'
-                        }
-                    }
-                }
-            }
-        });
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
 
-        // Hourly Activity Chart
-        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-        new Chart(hourlyCtx, {
-            type: 'radar',
-            data: {
-                labels: hourlyData.labels,
-                datasets: [{
-                    label: 'Activity by Hour',
-                    data: hourlyData.data,
-                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                    borderColor: 'rgb(255, 159, 64)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgb(255, 159, 64)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(255, 159, 64)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+  Promise.all([
+    fetch('/api/chart_data').then(r=>r.json()).catch(()=>({labels:[],data:[]})),
+    fetch('/api/risk_distribution').then(r=>r.json()).catch(()=>({labels:[],data:[]})),
+    fetch('/api/department_access').then(r=>r.json()).catch(()=>({labels:[],data:[]})),
+    fetch('/api/hourly_activity').then(r=>r.json()).catch(()=>({labels:[],data:[]})),
+    fetch('/api/recent_activity').then(r=>r.json()).catch(()=>({activities:[]}))
+  ]).then(([actData, riskData, deptData, hourData, recentData]) => {
 
-        // Update recent activity table
-        const tbody = document.getElementById('recentActivity');
-        tbody.innerHTML = recentData.activities.map(activity => `
-            <tr>
-                <td><small>${activity.time}</small></td>
-                <td>${activity.event}</td>
-                <td>${activity.user}</td>
-                <td><span class="badge bg-${activity.status_color}">${activity.status}</span></td>
-            </tr>
-        `).join('');
-
-    }).catch(error => {
-        console.error('Error loading chart data:', error);
-        document.getElementById('recentActivity').innerHTML = `
-            <tr>
-                <td colspan="4" class="text-center text-danger py-4">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Error loading data. Please refresh the page.
-                </td>
-            </tr>
-        `;
+    /* ── Activity Line Chart ──────────────────────────── */
+    new Chart(document.getElementById('activityChart'), {
+      type: 'line',
+      data: {
+        labels: actData.labels.length ? actData.labels : ['No data'],
+        datasets: [{
+          label: 'Access Events',
+          data: actData.data.length ? actData.data : [0],
+          borderColor: CYAN,
+          backgroundColor: (ctx) => {
+            const g = ctx.chart.ctx.createLinearGradient(0,0,0,300);
+            g.addColorStop(0, hexToRgba(CYAN, 0.25));
+            g.addColorStop(1, hexToRgba(CYAN, 0.01));
+            return g;
+          },
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: CYAN,
+          pointBorderColor: '#05101f',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(5,14,28,0.95)',
+            borderColor: 'rgba(0,212,255,0.3)',
+            borderWidth: 1,
+            titleColor: CYAN,
+            bodyColor: '#94a3b8',
+            cornerRadius: 8,
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(0,212,255,0.05)' }, ticks: { maxTicksLimit: 7 } },
+          y: { grid: { color: 'rgba(0,212,255,0.05)' }, beginAtZero: true }
+        }
+      }
     });
+
+    /* ── Risk Doughnut ─────────────────────────────────── */
+    const riskColors = [GREEN, CYAN, ORANGE, RED];
+    new Chart(document.getElementById('riskChart'), {
+      type: 'doughnut',
+      data: {
+        labels: riskData.labels.length ? riskData.labels : ['No data'],
+        datasets: [{
+          data: riskData.data.length ? riskData.data : [1],
+          backgroundColor: riskColors.map(c => hexToRgba(c, 0.85)),
+          borderColor: riskColors.map(c => hexToRgba(c, 0.4)),
+          borderWidth: 1,
+          hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, boxWidth: 10, boxHeight: 10, color: '#94a3b8' }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(5,14,28,0.95)',
+            borderColor: 'rgba(0,212,255,0.3)',
+            borderWidth: 1,
+            titleColor: CYAN,
+            bodyColor: '#94a3b8',
+            cornerRadius: 8,
+          }
+        }
+      }
+    });
+
+    // Update security score ring based on avg risk
+    const avgRisk = {{ stats.avg_risk }};
+    const scoreEl = document.getElementById('scoreValue');
+    const ringEl  = document.getElementById('scoreRing');
+    if (scoreEl) scoreEl.textContent = Math.round(100 - avgRisk);
+    if (ringEl) {
+      const dashOffset = 314 - (314 * (100 - avgRisk) / 100);
+      setTimeout(() => { ringEl.style.strokeDashoffset = dashOffset; }, 400);
+    }
+
+    /* ── Department Bar Chart ──────────────────────────── */
+    new Chart(document.getElementById('departmentChart'), {
+      type: 'bar',
+      data: {
+        labels: deptData.labels.length ? deptData.labels : ['No data'],
+        datasets: [{
+          label: 'Access Events',
+          data: deptData.data.length ? deptData.data : [0],
+          backgroundColor: deptData.labels.map((_, i) => {
+            const colors = [CYAN, PURPLE, GREEN, ORANGE, RED];
+            return hexToRgba(colors[i % colors.length], 0.7);
+          }),
+          borderColor: deptData.labels.map((_, i) => {
+            const colors = [CYAN, PURPLE, GREEN, ORANGE, RED];
+            return colors[i % colors.length];
+          }),
+          borderWidth: 1,
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(5,14,28,0.95)',
+            borderColor: 'rgba(0,212,255,0.3)',
+            borderWidth: 1,
+            titleColor: CYAN,
+            bodyColor: '#94a3b8',
+            cornerRadius: 8,
+          }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(0,212,255,0.05)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    /* ── Hourly Activity Area Chart ─────────────────── */
+    new Chart(document.getElementById('hourlyChart'), {
+      type: 'bar',
+      data: {
+        labels: hourData.labels,
+        datasets: [{
+          label: 'Events',
+          data: hourData.data,
+          backgroundColor: hourData.data.map(v => {
+            if (v === 0) return 'rgba(0,212,255,0.05)';
+            const max = Math.max(...hourData.data);
+            const intensity = v / max;
+            return `rgba(0,212,255,${0.15 + intensity * 0.65})`;
+          }),
+          borderColor: 'rgba(0,212,255,0.3)',
+          borderWidth: 1,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(5,14,28,0.95)',
+            borderColor: 'rgba(0,212,255,0.3)',
+            borderWidth: 1,
+            titleColor: CYAN,
+            bodyColor: '#94a3b8',
+            cornerRadius: 8,
+            callbacks: {
+              title: items => `Hour: ${items[0].label}`,
+              label: item => ` ${item.raw} events`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+          y: { grid: { color: 'rgba(0,212,255,0.05)' }, beginAtZero: true }
+        }
+      }
+    });
+
+    /* ── Recent Activity Feed ───────────────────────── */
+    const feed = document.getElementById('recentActivityFeed');
+    if (!recentData.activities || recentData.activities.length === 0) {
+      feed.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">NO RECENT EVENTS</div>
+          <div class="empty-state-sub">system monitoring active</div>
+        </div>`;
+      return;
+    }
+
+    const colorMap = { success: 'var(--green)', danger: 'var(--red)', warning: 'var(--orange)', secondary: 'var(--text-muted)' };
+    feed.innerHTML = recentData.activities.map((a, i) => `
+      <div class="activity-item" style="animation-delay:${i * 0.07}s">
+        <div class="activity-dot" style="background:${colorMap[a.status_color] || 'var(--cyan)'}"></div>
+        <div class="activity-time">${a.time}</div>
+        <div class="activity-text">
+          <strong>${a.user || 'Unknown'}</strong>
+          — ${a.event || 'Event'}
+        </div>
+        <span class="badge badge-${a.status_color === 'success' ? 'green' : a.status_color === 'danger' ? 'red' : 'orange'}"
+              style="font-size:9px;padding:2px 7px;">
+          ${a.status || '–'}
+        </span>
+      </div>`).join('');
+
+  });
 });
 </script>
 {% endblock %}

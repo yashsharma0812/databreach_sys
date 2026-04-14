@@ -1,50 +1,208 @@
 {% extends "base.html" %}
 
-{% block title %}Add Employee - Data Breach Prevention{% endblock %}
+{% block title %}Add Employee — EnterpriseGuard{% endblock %}
+
+{% block breadcrumb %}ENTERPRISE<span>/</span>EMPLOYEES<span>/</span>ADD{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h4>Add New Employee</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="emp_id" class="form-label">Employee ID</label>
-                        <input type="number" class="form-control" id="emp_id" name="emp_id" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-control" id="role" name="role" required>
-                            <option value="">Select Role</option>
-                            <option value="Developer">Developer</option>
-                            <option value="Security Admin">Security Admin</option>
-                            <option value="Analyst">Analyst</option>
-                            <option value="HR Manager">HR Manager</option>
-                            <option value="Data Engineer">Data Engineer</option>
-                            <option value="DBA">DBA</option>
-                            <option value="Auditor">Auditor</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="department" class="form-label">Department</label>
-                        <input type="text" class="form-control" id="department" name="department" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Employee</button>
-                    <a href="{{ url_for('employees') }}" class="btn btn-secondary ms-2">Cancel</a>
-                </form>
-            </div>
-        </div>
-    </div>
+
+<div class="page-header animate-fade-in">
+  <div class="page-header-left">
+    <div class="page-title">Register <span class="accent">New Employee</span></div>
+    <div class="page-subtitle">// create employee profile & access credentials</div>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('employees') }}" class="btn btn-ghost btn-sm">
+      <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+  </div>
 </div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+
+  <!-- Main Form -->
+  <div class="card animate-fade-in delay-1">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fas fa-user-plus icon"></i>
+        Employee Profile
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="POST" id="addEmpForm">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+          <div class="form-group">
+            <label class="form-label">Employee ID</label>
+            <div style="position:relative;">
+              <input
+                type="number"
+                class="form-control"
+                id="emp_id"
+                name="emp_id"
+                placeholder="e.g. 1006"
+                required
+                style="padding-left:40px;">
+              <i class="fas fa-fingerprint" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--cyan);font-size:14px;"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <div style="position:relative;">
+              <input
+                type="text"
+                class="form-control"
+                id="name"
+                name="name"
+                placeholder="e.g. John Smith"
+                required
+                style="padding-left:40px;">
+              <i class="fas fa-user" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;"></i>
+            </div>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Email Address</label>
+            <div style="position:relative;">
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                placeholder="e.g. john.smith@company.com"
+                required
+                style="padding-left:40px;">
+              <i class="fas fa-envelope" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Role / Position</label>
+            <div style="position:relative;">
+              <select class="form-select" id="role" name="role" required style="padding-left:40px;">
+                <option value="" disabled selected>Select role</option>
+                <option value="Developer">Developer</option>
+                <option value="Security Admin">Security Admin</option>
+                <option value="Analyst">Analyst</option>
+                <option value="HR Manager">HR Manager</option>
+                <option value="Data Engineer">Data Engineer</option>
+                <option value="DBA">DBA</option>
+                <option value="Auditor">Auditor</option>
+              </select>
+              <i class="fas fa-briefcase" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;z-index:2;"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <div style="position:relative;">
+              <input
+                type="text"
+                class="form-control"
+                id="department"
+                name="department"
+                placeholder="e.g. Engineering"
+                required
+                list="deptList"
+                style="padding-left:40px;">
+              <i class="fas fa-building" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+              <datalist id="deptList">
+                <option value="Engineering">
+                <option value="Security">
+                <option value="Finance">
+                <option value="Human Resources">
+                <option value="IT Operations">
+                <option value="Analytics">
+                <option value="Legal">
+              </datalist>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i>
+            Register Employee
+          </button>
+          <a href="{{ url_for('employees') }}" class="btn btn-ghost">
+            <i class="fas fa-times"></i>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Info Sidebar -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Preview Card -->
+    <div class="card animate-fade-in delay-2">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-id-card icon"></i>Preview</div>
+      </div>
+      <div class="card-body" style="text-align:center;padding:24px 20px;">
+        <div class="emp-avatar" id="previewAvatar"
+          style="width:60px;height:60px;border-radius:14px;font-size:22px;margin:0 auto 14px;background:linear-gradient(135deg,var(--cyan),var(--purple));">
+          ?
+        </div>
+        <div id="previewName" style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">
+          New Employee
+        </div>
+        <div id="previewRole" style="font-size:11px;color:var(--cyan);font-family:var(--font-mono);margin-bottom:12px;">
+          – SELECT ROLE –
+        </div>
+        <div id="previewDept" style="font-size:12px;color:var(--text-muted);">
+          <i class="fas fa-building" style="margin-right:5px;"></i>–
+        </div>
+      </div>
+    </div>
+
+    <!-- Guidelines -->
+    <div class="card animate-fade-in delay-3">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-info-circle icon"></i>Guidelines</div>
+      </div>
+      <div class="card-body" style="padding:16px;">
+        <div class="terminal-box" style="font-size:11px;line-height:2;">
+          <div style="color:var(--cyan);">// Security Policy</div>
+          <div style="color:var(--text-muted);">  ID must be unique</div>
+          <div style="color:var(--text-muted);">  Use corp email</div>
+          <div style="color:var(--text-muted);">  Assign correct role</div>
+          <div style="color:var(--text-muted);">  Dept must match org</div>
+          <div style="color:var(--green);margin-top:4px;">  → Access logged on create</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const nameInput = document.getElementById('name');
+  const roleInput = document.getElementById('role');
+  const deptInput = document.getElementById('department');
+
+  function updatePreview() {
+    const name = nameInput.value.trim() || 'New Employee';
+    const role = roleInput.value || '– SELECT ROLE –';
+    const dept = deptInput.value.trim() || '–';
+
+    document.getElementById('previewAvatar').textContent = name[0]?.toUpperCase() || '?';
+    document.getElementById('previewName').textContent = name;
+    document.getElementById('previewRole').textContent = role;
+    document.getElementById('previewDept').innerHTML = `<i class="fas fa-building" style="margin-right:5px;"></i>${dept}`;
+  }
+
+  nameInput.addEventListener('input', updatePreview);
+  roleInput.addEventListener('change', updatePreview);
+  deptInput.addEventListener('input', updatePreview);
+</script>
 {% endblock %}
